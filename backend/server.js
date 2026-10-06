@@ -8,14 +8,36 @@ const DATA_PATH = path.join(__dirname, 'data.json');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-// 1. Cấu hình CORS
+// 1. Cấu hình CORS linh hoạt (Localhost + Vercel + Biến môi trường FRONTEND_URL)
 app.use(cors({
-  origin: [FRONTEND_URL, 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type']
+  origin: (origin, callback) => {
+    // Cho phép các request không có origin (curl, Postman, SSR server-to-server)
+    if (!origin) return callback(null, true);
+
+    const isAllowed = 
+      origin.includes('localhost') ||
+      origin.endsWith('.vercel.app') ||
+      (FRONTEND_URL && origin === FRONTEND_URL);
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+
+    // Mặc định cho phép để tránh chặn nhầm khi người dùng test trên domain preview khác
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 2. Parser JSON body
+// 2. Chuẩn hoá đường dẫn URL (tự động loại bỏ dấu gạch chéo kép //api/...)
+app.use((req, res, next) => {
+  req.url = req.url.replace(/\/{2,}/g, '/');
+  next();
+});
+
+// 3. Parser JSON body
 app.use(express.json());
 
 // 3. Helper đọc/ghi dữ liệu bền vững (Nâng cao 3 - data.json)

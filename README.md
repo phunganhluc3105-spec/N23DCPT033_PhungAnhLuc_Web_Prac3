@@ -11,6 +11,15 @@
 
 ---
 
+## 🚀 Liên kết Triển khai (Production Deployment)
+
+| Dịch vụ | Nền tảng | Đường dẫn truy cập |
+| :--- | :--- | :--- |
+| **Frontend (Next.js)** | Vercel | [https://n23-dcpt-033-phung-anh-luc-web-prac-opal.vercel.app/](https://n23-dcpt-033-phung-anh-luc-web-prac-opal.vercel.app/) |
+| **Backend (Express API)** | Fly.io | [https://backend-rolling-beacon-7727.fly.dev/](https://backend-rolling-beacon-7727.fly.dev/) |
+
+---
+
 ## ✨ Tính năng chính (Key Features)
 
 ### 1. **Danh mục sản phẩm (Products)**

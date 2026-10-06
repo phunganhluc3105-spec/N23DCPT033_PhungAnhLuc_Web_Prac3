@@ -7,6 +7,12 @@ app = 'backend-rolling-beacon-7727'
 primary_region = 'sin'
 
 [build]
+
+[env]
+  PORT = '5000'
+  NODE_ENV = 'production'
+  FRONTEND_URL = 'https://n23-dcpt-033-phung-anh-luc-web-prac-opal.vercel.app'
+
 [http_service]
   internal_port = 5000
   force_https = true
