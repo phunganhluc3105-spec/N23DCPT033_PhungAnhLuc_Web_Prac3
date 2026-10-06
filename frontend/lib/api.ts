@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Sử dụng baseURL tương đối hoặc http://localhost:5000 (đã có rewrite proxy và cors)
+// baseURL ưu tiên đọc từ biến môi trường NEXT_PUBLIC_API_URL khi deploy production
 const api = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
   headers: { 'Content-Type': 'application/json' },
 });
 
