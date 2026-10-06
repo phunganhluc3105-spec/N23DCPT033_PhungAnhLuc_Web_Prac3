@@ -3,11 +3,11 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors({
-  origin: 'http://localhost:3000', // chỉ cho phép NextJS
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type']
-}));
+// app.use(cors({
+//   origin: 'http://localhost:3000', // chỉ cho phép NextJS
+//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//   allowedHeaders: ['Content-Type']
+// }));
 
 app.use(express.json());
 
