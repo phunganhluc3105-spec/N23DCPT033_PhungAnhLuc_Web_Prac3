@@ -1,0 +1,54 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Loko Grayes Jacket",
+      "category": "Jacket",
+      "price": 950000,
+      "rating": 4.5,
+      "image": "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 2,
+      "name": "Loko Enigma Shirt",
+      "category": "Shirt",
+      "price": 580000,
+      "rating": 4.4,
+      "image": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 3,
+      "name": "Loko Azaruka Jacket",
+      "category": "Jacket",
+      "price": 1200000,
+      "rating": 4.6,
+      "image": "https://images.unsplash.com/photo-1544441893-675973e31985?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 4,
+      "name": "Loko Bluelight Jeans",
+      "category": "Jeans",
+      "price": 650000,
+      "rating": 4.6,
+      "image": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 1791280459242,
+      "name": "Vớ cho trẻ nhỏ",
+      "category": "Clothes",
+      "price": 20000,
+      "rating": 4.5,
+      "image": "https://i.pinimg.com/736x/35/4f/31/354f31581b00e90261fa0c53731e05ff.jpg"
+    }
+  ],
+  "cart": [
+    {
+      "productId": 1,
+      "quantity": 1
+    },
+    {
+      "productId": 2,
+      "quantity": 1
+    }
+  ]
+}

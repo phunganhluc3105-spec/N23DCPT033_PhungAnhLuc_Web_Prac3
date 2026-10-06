@@ -1,11 +1,16 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs').promises;
+const path = require('path');
 
 const app = express();
+const DATA_PATH = path.join(__dirname, 'data.json');
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // 1. Cấu hình CORS
 app.use(cors({
-  origin: 'http://localhost:3000', // chỉ cho phép NextJS
+  origin: [FRONTEND_URL, 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type']
 }));
@@ -13,51 +18,218 @@ app.use(cors({
 // 2. Parser JSON body
 app.use(express.json());
 
-// 3. Mock Database (in-memory)
-let products = [
-  { id: 1, name: 'Áo thun basic', price: 150000 },
-  { id: 2, name: 'Quần jeans slim', price: 450000 },
-];
-
-// 4. Route GET - Lấy danh sách sản phẩm
-app.get('/api/products', (req, res) => {
-  res.json(products);
-});
-
-// 5. Route POST - Thêm sản phẩm mới (Tiết 2)
-app.post('/api/products', (req, res) => {
-  const { name, price } = req.body;
-
-  // Validation đơn giản
-  if (!name || !price) {
-    return res.status(400).json({ error: 'Thiếu dữ liệu (name hoặc price)' });
+// 3. Helper đọc/ghi dữ liệu bền vững (Nâng cao 3 - data.json)
+async function readData() {
+  try {
+    const raw = await fs.readFile(DATA_PATH, 'utf-8');
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error('Lỗi đọc data.json, khởi tạo dữ liệu mặc định:', error);
+    return { products: [], cart: [] };
   }
+}
 
-  const newProduct = {
-    id: Date.now(),
-    name,
-    price: Number(price)
-  };
+async function writeData(data) {
+  await fs.writeFile(DATA_PATH, JSON.stringify(data, null, 2), 'utf-8');
+}
 
-  products.push(newProduct);
-  res.status(201).json(newProduct);
-});
+// ==================== CÁC ROUTE PRODUCTS ====================
 
-// 6. Route DELETE - Xoá sản phẩm theo ID (Tiết 4)
-app.delete('/api/products/:id', (req, res) => {
-  const id = Number(req.params.id);
-  const index = products.findIndex((p) => p.id === id);
-
-  if (index === -1) {
-    return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
+// GET /api/products - Lấy danh sách sản phẩm
+app.get('/api/products', async (req, res) => {
+  try {
+    const data = await readData();
+    res.json(data.products || []);
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi máy chủ' });
   }
-
-  products.splice(index, 1);
-  res.json({ message: 'Đã xoá thành công' });
 });
 
-// 7. Khởi động server
+// POST /api/products - Thêm sản phẩm mới (Tiết 2)
+app.post('/api/products', async (req, res) => {
+  try {
+    const { name, price, category, image } = req.body;
+
+    if (!name || !price) {
+      return res.status(400).json({ error: 'Thiếu dữ liệu (name hoặc price)' });
+    }
+
+    const data = await readData();
+    const newProduct = {
+      id: Date.now(),
+      name: name.trim(),
+      category: category?.trim() || 'Clothes',
+      price: Number(price),
+      rating: 4.5,
+      image: image?.trim() || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80'
+    };
+
+    data.products = data.products || [];
+    data.products.push(newProduct);
+    await writeData(data);
+
+    res.status(201).json(newProduct);
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi thêm sản phẩm' });
+  }
+});
+
+// PUT /api/products/:id - Sửa thông tin sản phẩm (Nâng cao 1 - BONUS)
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const data = await readData();
+    data.products = data.products || [];
+    const index = data.products.findIndex((p) => p.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
+    }
+
+    data.products[index] = { ...data.products[index], ...req.body };
+    await writeData(data);
+
+    res.json(data.products[index]);
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi cập nhật sản phẩm' });
+  }
+});
+
+// DELETE /api/products/:id - Xoá sản phẩm theo ID (Tiết 4)
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const data = await readData();
+    data.products = data.products || [];
+    const index = data.products.findIndex((p) => p.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
+    }
+
+    data.products.splice(index, 1);
+    // Xóa sản phẩm khỏi giỏ nếu có
+    if (data.cart) {
+      data.cart = data.cart.filter((item) => item.productId !== id);
+    }
+    await writeData(data);
+
+    res.json({ message: 'Đã xoá thành công' });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi xoá sản phẩm' });
+  }
+});
+
+// ==================== CÁC ROUTE CART (NÂNG CAO 4) ====================
+
+// GET /api/cart - Lấy danh sách giỏ hàng kèm chi tiết sản phẩm và tổng tiền
+app.get('/api/cart', async (req, res) => {
+  try {
+    const data = await readData();
+    const products = data.products || [];
+    const cart = data.cart || [];
+
+    const items = cart.map((item) => {
+      const product = products.find((p) => p.id === item.productId);
+      return {
+        productId: item.productId,
+        quantity: item.quantity,
+        product: product || {
+          id: item.productId,
+          name: 'Sản phẩm không xác định',
+          price: 0,
+          image: ''
+        }
+      };
+    });
+
+    const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+    res.json({ items, total, totalCount });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi tải giỏ hàng' });
+  }
+});
+
+// POST /api/cart - Thêm sản phẩm vào giỏ
+app.post('/api/cart', async (req, res) => {
+  try {
+    const { productId, quantity = 1 } = req.body;
+    const pid = Number(productId);
+    const data = await readData();
+    data.products = data.products || [];
+    data.cart = data.cart || [];
+
+    const product = data.products.find((p) => p.id === pid);
+    if (!product) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm để thêm vào giỏ' });
+    }
+
+    const existing = data.cart.find((i) => i.productId === pid);
+    if (existing) {
+      existing.quantity += Number(quantity);
+    } else {
+      data.cart.push({ productId: pid, quantity: Number(quantity) });
+    }
+
+    await writeData(data);
+    res.status(201).json({ message: 'Đã thêm vào giỏ hàng', cart: data.cart });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi thêm vào giỏ hàng' });
+  }
+});
+
+// PUT /api/cart/:productId - Tăng / Giảm số lượng trong giỏ
+app.put('/api/cart/:productId', async (req, res) => {
+  try {
+    const pid = Number(req.params.productId);
+    const { quantity } = req.body;
+    const data = await readData();
+    data.cart = data.cart || [];
+
+    const item = data.cart.find((i) => i.productId === pid);
+    if (!item) {
+      return res.status(404).json({ error: 'Sản phẩm không có trong giỏ hàng' });
+    }
+
+    const newQty = Number(quantity);
+    if (newQty <= 0) {
+      data.cart = data.cart.filter((i) => i.productId !== pid);
+    } else {
+      item.quantity = newQty;
+    }
+
+    await writeData(data);
+    res.json({ message: 'Đã cập nhật số lượng' });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi cập nhật giỏ hàng' });
+  }
+});
+
+// DELETE /api/cart/:productId - Xoá sản phẩm khỏi giỏ
+app.delete('/api/cart/:productId', async (req, res) => {
+  try {
+    const pid = Number(req.params.productId);
+    const data = await readData();
+    data.cart = data.cart || [];
+
+    const index = data.cart.findIndex((i) => i.productId === pid);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Sản phẩm không có trong giỏ hàng' });
+    }
+
+    data.cart.splice(index, 1);
+    await writeData(data);
+
+    res.json({ message: 'Đã xoá sản phẩm khỏi giỏ hàng' });
+  } catch (err) {
+    res.status(500).json({ error: 'Lỗi xoá sản phẩm khỏi giỏ' });
+  }
+});
+
+// 4. Khởi động server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Backend chạy tại port :${PORT}`);
+  console.log(`Backend chạy tại port :${PORT} (Lưu trữ: data.json)`);
 });
