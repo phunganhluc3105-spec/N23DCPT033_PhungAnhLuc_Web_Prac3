@@ -25,7 +25,8 @@
 ### 1. **Danh mục sản phẩm (Products)**
 
 * Hiển thị dạng lưới 2 cột chuẩn thiết kế tối giản LOKO.
-* Tìm kiếm theo từ khóa và lọc danh mục thời gian thực (*All, Jacket, Shirt, Jeans*).
+* Tìm kiếm theo từ khóa và lọc danh mục thời gian thực (*All, Jacket, Shirt, Jeans, Clothes*).
+* **Phân trang thông minh (Pagination):** Tùy chọn hiển thị 4, 6 hoặc 8 sản phẩm/trang, hỗ trợ chuyển trang (Trang trước, Trang sau, chọn số trang trực tiếp), tự động cuộn mượt lên đầu danh mục và tự động quay về trang 1 khi lọc hoặc tìm kiếm.
 * **CRUD đầy đủ:** Thêm mới (POST), Chỉnh sửa thông tin (PUT qua modal), Xóa sản phẩm (DELETE với Optimistic Update).
 
 ### 2. **Quản lý Giỏ hàng (Cart Module)**
@@ -76,7 +77,7 @@ npm run dev
 
 | Method   | Endpoint               | Mô tả                                   |
 | :------- | :--------------------- | :-------------------------------------- |
-| `GET`    | `/api/products`        | Lấy danh sách toàn bộ sản phẩm          |
+| `GET`    | `/api/products`        | Lấy danh sách sản phẩm (hỗ trợ phân trang qua query `page`, `limit`, `category`, `search`) |
 | `POST`   | `/api/products`        | Thêm sản phẩm mới                       |
 | `PUT`    | `/api/products/:id`    | Cập nhật thông tin sản phẩm             |
 | `DELETE` | `/api/products/:id`    | Xóa sản phẩm theo ID                    |

@@ -1,10 +1,12 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const DATA_PATH = path.join(__dirname, 'data.json');
+const DEFAULT_DATA_PATH = path.join(__dirname, 'data.json');
+const DATA_PATH = process.env.DATA_PATH || DEFAULT_DATA_PATH;
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
@@ -40,28 +42,96 @@ app.use((req, res, next) => {
 // 3. Parser JSON body
 app.use(express.json());
 
-// 3. Helper đọc/ghi dữ liệu bền vững (Nâng cao 3 - data.json)
+// 3. Helper khởi tạo & đọc/ghi dữ liệu bền vững (Nâng cao 3 - data.json & Fly Volume)
+async function initData() {
+  try {
+    await fs.access(DATA_PATH);
+  } catch {
+    try {
+      console.log(`Chưa tìm thấy ${DATA_PATH}, khởi tạo dữ liệu mẫu từ ${DEFAULT_DATA_PATH}...`);
+      await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
+      const defaultContent = await fs.readFile(DEFAULT_DATA_PATH, 'utf-8');
+      await fs.writeFile(DATA_PATH, defaultContent, 'utf-8');
+      console.log(`Đã khởi tạo file dữ liệu thành công tại ${DATA_PATH}`);
+    } catch (err) {
+      console.error('Lỗi khi khởi tạo file dữ liệu ban đầu:', err.message);
+    }
+  }
+}
+
 async function readData() {
   try {
     const raw = await fs.readFile(DATA_PATH, 'utf-8');
     return JSON.parse(raw);
   } catch (error) {
-    console.error('Lỗi đọc data.json, khởi tạo dữ liệu mặc định:', error);
-    return { products: [], cart: [] };
+    console.error(`Lỗi đọc ${DATA_PATH}, thử khôi phục từ mẫu mặc định:`, error.message);
+    try {
+      await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
+      const defaultRaw = await fs.readFile(DEFAULT_DATA_PATH, 'utf-8');
+      const defaultData = JSON.parse(defaultRaw);
+      await fs.writeFile(DATA_PATH, defaultRaw, 'utf-8');
+      return defaultData;
+    } catch (fallbackErr) {
+      console.error('Lỗi khởi tạo dữ liệu mặc định:', fallbackErr.message);
+      return { products: [], cart: [] };
+    }
   }
 }
 
 async function writeData(data) {
+  await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
   await fs.writeFile(DATA_PATH, JSON.stringify(data, null, 2), 'utf-8');
 }
 
 // ==================== CÁC ROUTE PRODUCTS ====================
 
-// GET /api/products - Lấy danh sách sản phẩm
+// GET /api/products - Lấy danh sách sản phẩm (hỗ trợ phân trang: page, limit, category, search)
 app.get('/api/products', async (req, res) => {
   try {
     const data = await readData();
-    res.json(data.products || []);
+    let products = data.products || [];
+
+    const { category, search, page, limit } = req.query;
+
+    // Lọc theo danh mục nếu có
+    if (category && category !== 'All') {
+      products = products.filter(
+        (p) => p.category && p.category.toLowerCase() === category.toLowerCase()
+      );
+    }
+
+    // Lọc theo từ khoá tìm kiếm nếu có
+    if (search) {
+      const q = search.toLowerCase();
+      products = products.filter(
+        (p) => p.name && p.name.toLowerCase().includes(q)
+      );
+    }
+
+    // Nếu có tham số page hoặc limit -> Trả về dữ liệu phân trang
+    if (page !== undefined || limit !== undefined) {
+      const currentPage = Math.max(1, parseInt(page, 10) || 1);
+      const perPage = Math.max(1, parseInt(limit, 10) || 4);
+      const total = products.length;
+      const totalPages = Math.max(1, Math.ceil(total / perPage));
+      const startIndex = (currentPage - 1) * perPage;
+      const paginatedProducts = products.slice(startIndex, startIndex + perPage);
+
+      return res.json({
+        products: paginatedProducts,
+        pagination: {
+          total,
+          page: currentPage,
+          limit: perPage,
+          totalPages,
+          hasNextPage: currentPage < totalPages,
+          hasPrevPage: currentPage > 1,
+        },
+      });
+    }
+
+    // Mặc định trả về toàn bộ mảng để tương thích ngược hoàn toàn với code cũ
+    res.json(products);
   } catch (err) {
     res.status(500).json({ error: 'Lỗi máy chủ' });
   }
@@ -252,6 +322,7 @@ app.delete('/api/cart/:productId', async (req, res) => {
 
 // 4. Khởi động server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Backend chạy tại port :${PORT} (Lưu trữ: data.json)`);
+app.listen(PORT, async () => {
+  await initData();
+  console.log(`Backend chạy tại port :${PORT} (Lưu trữ: ${DATA_PATH})`);
 });

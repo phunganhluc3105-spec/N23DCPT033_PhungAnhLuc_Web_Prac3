@@ -39,6 +39,62 @@
       "price": 20000,
       "rating": 4.5,
       "image": "https://i.pinimg.com/736x/35/4f/31/354f31581b00e90261fa0c53731e05ff.jpg"
+    },
+    {
+      "id": 5,
+      "name": "Loko Oxford Classic Shirt",
+      "category": "Shirt",
+      "price": 490000,
+      "rating": 4.7,
+      "image": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 6,
+      "name": "Loko Bomber Flight Jacket",
+      "category": "Jacket",
+      "price": 1150000,
+      "rating": 4.8,
+      "image": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 7,
+      "name": "Loko Black Slimfit Jeans",
+      "category": "Jeans",
+      "price": 720000,
+      "rating": 4.5,
+      "image": "https://images.unsplash.com/photo-1542272604-780c96856592?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 8,
+      "name": "Loko Linen Summer Shirt",
+      "category": "Shirt",
+      "price": 520000,
+      "rating": 4.3,
+      "image": "https://images.unsplash.com/photo-1603252109303-2751441dd157?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 9,
+      "name": "Loko Windbreaker Sport Jacket",
+      "category": "Jacket",
+      "price": 890000,
+      "rating": 4.7,
+      "image": "https://images.unsplash.com/photo-1548883354-7622d03aca27?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 10,
+      "name": "Loko Ripped Street Jeans",
+      "category": "Jeans",
+      "price": 680000,
+      "rating": 4.6,
+      "image": "https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=500&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": 11,
+      "name": "Loko Cotton Minimalist Tee",
+      "category": "Clothes",
+      "price": 250000,
+      "rating": 4.9,
+      "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80"
     }
   ],
   "cart": [
